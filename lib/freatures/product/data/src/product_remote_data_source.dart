@@ -14,9 +14,11 @@ abstract class ProductRemoteDataSource {
       _ProductRemoteDataSource;
 
   @GET('/products')
+  @Header('Accept: application/json')
   Future<ProductListResponseModel> getProducts();
 
   @MultiPart()
+  @Header('Accept: application/json')
   @POST('/products')
   Future<ProductSingleResponseModel> createProduct({
     @Part(name: 'name') required String name,
@@ -26,15 +28,17 @@ abstract class ProductRemoteDataSource {
   });
 
   @MultiPart()
-  @PUT('/products/{id}')
+  @Header('Accept: application/json')
+  @POST('/products/{id}')
   Future<ProductSingleResponseModel> updateProduct({
-    @Path() required int id,
-    @Path() required String name,
-    @Path() required double price,
-    @Path() String? description,
-    @Path() MultipartFile? image,
+    @Path("id") required int id,
+    @Part(name: 'name') required String name,
+    @Part(name: 'price') required double price,
+    @Part(name: 'description') String? description,
+    @Part(name: 'image') MultipartFile? image,
   });
 
   @DELETE('/products/{id}')
+  @Header('Accept: application/json')
   Future<ProductDeleteResponseModel> deleteProduct(@Path() int id);
 }

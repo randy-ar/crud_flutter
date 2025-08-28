@@ -30,7 +30,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
     super.initState();
     if (widget.product != null) {
       _nameController.text = widget.product!.name;
-      _descriptionController.text = widget.product!.description;
+      _descriptionController.text = widget.product!.description ?? '';
       _priceController.text = widget.product!.price.toString();
       _urlImage = widget.product!.image;
     }
@@ -47,21 +47,24 @@ class _ProductFormPageState extends State<ProductFormPage> {
   void _saveProduct(BuildContext context) {
     if (_formKey.currentState!.validate()) {
       if (widget.product == null) {
+        // Logic untuk CREATE product
         context.read<ProductCubit>().createProduct(
           name: _nameController.text,
           description: _descriptionController.text,
           price: double.parse(_priceController.text),
           image: _selectedImage?.path,
         );
+      } else {
+        // Logic untuk UPDATE product
+        Logger().d("Update product clicked");
+        context.read<ProductCubit>().updateProduct(
+          id: widget.product!.id!,
+          name: _nameController.text,
+          description: _descriptionController.text,
+          price: double.parse(_priceController.text),
+          image: _selectedImage?.path,
+        );
       }
-    } else {
-      context.read<ProductCubit>().updateProduct(
-        id: widget.product!.id!, // Gunakan ID dari product yang ada
-        name: _nameController.text,
-        description: _descriptionController.text,
-        price: double.parse(_priceController.text),
-        image: _selectedImage?.path,
-      );
     }
   }
 
@@ -87,6 +90,10 @@ class _ProductFormPageState extends State<ProductFormPage> {
   @override
   Widget build(BuildContext context) {
     final isUpdating = widget.product != null;
+    String? nameError;
+    String? priceError;
+    String? imageError;
+    String? descriptionError;
 
     return Scaffold(
       appBar: AppBar(title: Text(isUpdating ? 'Ubah Produk' : 'Tambah Produk')),
@@ -103,11 +110,18 @@ class _ProductFormPageState extends State<ProductFormPage> {
           } else if (state is ProductsFailure) {
             Logger().d("ProductsFailure");
             _showSnackbar(context, state.message, Colors.red);
+          } else if (state is ProductInputError) {
+            Logger().d("ProductInputError");
+            nameError = state.data.errors?["name"]?.first;
+            priceError = state.data.errors?["price"]?.first;
+            imageError = state.data.errors?["image"]?.first;
+            descriptionError = state.data.errors?["description"]?.first;
           }
         },
         child: Builder(
           builder: (context) {
             final state = context.watch<ProductCubit>().state;
+            final loading = state is ProductsSingleLoading;
             if (state is ProductsLoading) {
               return const Center(child: CircularProgressIndicator());
             }
@@ -117,7 +131,6 @@ class _ProductFormPageState extends State<ProductFormPage> {
                 padding: const EdgeInsets.all(16.0),
                 children: [
                   const SizedBox(height: 16),
-                  // PENYESUAIAN: Bagian untuk pratinjau dan pilih gambar
                   _selectedImage != null
                       ? Expanded(
                           child: ClipRRect(
@@ -132,21 +145,19 @@ class _ProductFormPageState extends State<ProductFormPage> {
                           ),
                         )
                       : (_urlImage != null)
-                      ? Expanded(
-                          child: ClipRRect(
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(16.0),
-                              bottom: Radius.circular(16.0),
+                      ? ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16.0),
+                            bottom: Radius.circular(16.0),
+                          ),
+                          child: CachedNetworkImage(
+                            imageUrl: _urlImage!,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => const Center(
+                              child: CircularProgressIndicator(),
                             ),
-                            child: CachedNetworkImage(
-                              imageUrl: _urlImage!,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => const Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                              errorWidget: (context, url, error) =>
-                                  const Icon(Icons.error),
-                            ),
+                            errorWidget: (context, url, error) =>
+                                const Icon(Icons.error),
                           ),
                         )
                       : const Text(
@@ -155,20 +166,24 @@ class _ProductFormPageState extends State<ProductFormPage> {
                         ),
                   const SizedBox(height: 16),
                   TextFormField(
+                    enabled: !loading,
                     controller: _nameController,
                     decoration: InputDecoration(
                       labelText: 'Nama Produk',
                       border: OutlineInputBorder(),
+                      errorText: nameError,
                     ),
                     validator: (value) =>
                         value!.isEmpty ? 'Nama tidak boleh kosong' : null,
                   ),
                   const SizedBox(height: 20),
                   TextFormField(
+                    enabled: !loading,
                     controller: _priceController,
                     decoration: InputDecoration(
                       labelText: 'Harga',
                       border: OutlineInputBorder(),
+                      errorText: priceError,
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
@@ -181,7 +196,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
                   ),
                   const SizedBox(height: 40),
                   ElevatedButton.icon(
-                    onPressed: _pickImage,
+                    onPressed: loading ? null : _pickImage,
                     icon: const Icon(Icons.image),
                     label: const Text('Pilih Gambar'),
                     style: ElevatedButton.styleFrom(
@@ -190,26 +205,34 @@ class _ProductFormPageState extends State<ProductFormPage> {
                       minimumSize: const Size(double.infinity, 50),
                     ),
                   ),
-                  const SizedBox(height: 40),
+
+                  const SizedBox(height: 20),
+                  if (imageError != null)
+                    Text(imageError!, style: TextStyle(color: Colors.red)),
+                  const SizedBox(height: 20),
 
                   TextFormField(
+                    enabled: !loading,
                     minLines: 3,
                     maxLines: 5,
                     controller: _descriptionController,
                     decoration: InputDecoration(
                       labelText: 'Deksripsi',
                       border: OutlineInputBorder(),
+                      errorText: descriptionError,
                     ),
                   ),
                   const SizedBox(height: 40),
                   ElevatedButton(
-                    onPressed: () => _saveProduct(context),
-                    child: Text(isUpdating ? 'Ubah' : 'Simpan'),
+                    onPressed: () => loading ? null : _saveProduct(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
                       minimumSize: const Size(double.infinity, 50),
                     ),
+                    child: (state is ProductsSingleLoading)
+                        ? CircularProgressIndicator()
+                        : Text(isUpdating ? 'Ubah' : 'Simpan'),
                   ),
                 ],
               ),

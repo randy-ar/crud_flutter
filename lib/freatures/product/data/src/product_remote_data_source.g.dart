@@ -104,10 +104,18 @@ class _ProductRemoteDataSource implements ProductRemoteDataSource {
     final queryParameters = <String, dynamic>{};
     queryParameters.removeWhere((k, v) => v == null);
     final _headers = <String, dynamic>{};
-    const Map<String, dynamic>? _data = null;
+    final _data = FormData();
+    _data.fields.add(MapEntry('name', name));
+    _data.fields.add(MapEntry('price', price.toString()));
+    if (description != null) {
+      _data.fields.add(MapEntry('description', description));
+    }
+    if (image != null) {
+      _data.files.add(MapEntry('image', image));
+    }
     final _options = _setStreamType<ProductSingleResponseModel>(
       Options(
-            method: 'PUT',
+            method: 'POST',
             headers: _headers,
             extra: _extra,
             contentType: 'multipart/form-data',

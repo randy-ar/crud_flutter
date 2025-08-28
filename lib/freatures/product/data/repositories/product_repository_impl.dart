@@ -87,6 +87,15 @@ class ProductRepositoryImpl implements ProductRepository {
           filename: image.split('/').last,
         );
       }
+      Logger().d("Data yang dikirim ke server:");
+      Logger().d({
+        "id": id,
+        "name": name,
+        "description": description ?? '',
+        "price": price,
+        "image": multipartImage,
+      });
+
       final response = await remoteDataSource.updateProduct(
         id: id,
         name: name,
@@ -98,9 +107,25 @@ class ProductRepositoryImpl implements ProductRepository {
       return Right(response);
     } on DioException catch (e) {
       if (e.response != null && e.response!.statusCode == 422) {
+        Logger().d({
+          "data": InputErrorWrapper.fromJson(e.response!.data),
+          "message": e.message.toString(),
+          "statusCode": e.response!.statusCode,
+          "statusMessage": e.response!.statusMessage,
+          "requestOptions": e.requestOptions,
+        });
+        Logger().d("Validation error");
+        Logger().d(e.response!.data);
+        Logger().d({
+          "data": InputErrorWrapper.fromJson(e.response!.data),
+          "message": e.message.toString(),
+          "statusCode": e.response!.statusCode,
+          "statusMessage": e.response!.statusMessage,
+          "requestOptions": e.requestOptions,
+        });
         return Left(
           InputFailure(
-            data: e.response!.data,
+            data: InputErrorWrapper.fromJson(e.response!.data),
             message: e.message.toString(),
             statusCode: e.response!.statusCode,
             statusMessage: e.response!.statusMessage,

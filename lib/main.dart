@@ -17,7 +17,7 @@ import 'package:crud_product/freatures/auth/data/datasources/auth_remote_data_so
 import 'package:crud_product/freatures/auth/data/repositories/auth_repository_impl.dart';
 import 'package:crud_product/freatures/auth/domain/repositories/auth_repository.dart';
 import 'package:crud_product/freatures/auth/domain/usecases/login_use_case.dart';
-import 'package:crud_product/freatures/auth/presentation/bloc/auth_bloc.dart';
+import 'package:crud_product/freatures/auth/presentation/bloc/auth_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
@@ -30,7 +30,15 @@ Future<void> init() async {
   Logger().d("EXTERNAL");
   // External
   await Hive.initFlutter();
-  final dio = Dio();
+  final dio = Dio(
+    BaseOptions(
+      baseUrl: 'http://192.168.3.169:8000/api',
+      followRedirects: false,
+      validateStatus: (status) {
+        return status! < 400;
+      },
+    ),
+  );
   final localStorageService = HiveServiceImpl();
   dio.interceptors.add(AuthInterceptor(localStorageService));
 

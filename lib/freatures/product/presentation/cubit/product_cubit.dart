@@ -24,7 +24,7 @@ class ProductCubit extends Cubit<ProductState> {
     this.deleteProductUsecase,
   ) : super(ProductInitial());
 
-  Future<void> getProducts() async {
+  Future<void> getProducts({String? message, String? session}) async {
     Logger().d("Loading get products");
     emit(ProductsLoading());
     Logger().d("Get products");
@@ -33,8 +33,12 @@ class ProductCubit extends Cubit<ProductState> {
     result.fold(
       (failure) => emit(ProductsFailure(message: failure.message)),
       (responseModel) => emit(
-        ProductListLoaded(data: responseModel.data),
-      ), // Mengambil 'data' di sini
+        ProductListLoaded(
+          data: responseModel.data,
+          message: message,
+          session: session,
+        ),
+      ),
     );
     Logger().d("Takes long?");
   }
@@ -45,6 +49,7 @@ class ProductCubit extends Cubit<ProductState> {
     String? description,
     String? image,
   }) async {
+    emit(ProductsSingleLoading());
     Logger().d("Create product");
     Logger().d("Product list loaded");
     final params = CreateParams(
@@ -58,9 +63,13 @@ class ProductCubit extends Cubit<ProductState> {
     Logger().d("Fold result");
     result.fold(
       (failure) => {
-        Logger().d("Fold failure"),
+        Logger().d("Fold failure product"),
+        Logger().d(failure.message.toString()),
         if (failure is InputFailure)
           {
+            Logger().d("Fold failure product data"),
+            Logger().d(failure.data.toString()),
+            emit(ProductListLoaded(data: (state as ProductListLoaded).data)),
             emit(
               ProductInputError(
                 data: failure.data,
@@ -75,24 +84,7 @@ class ProductCubit extends Cubit<ProductState> {
       },
       (result) {
         Logger().d("Fold success");
-        // PENYESUAIAN PENTING DI SINI
-        List<ProductEntity> updatedList = [];
-        if (state is ProductListLoaded) {
-          // Jika state saat ini adalah ProductsLoaded, tambahkan data baru ke list yang sudah ada
-          updatedList = [result.data!, ...(state as ProductListLoaded).data];
-        } else {
-          // Jika tidak, buat list baru hanya dengan data yang baru ditambahkan
-          updatedList = [result.data!];
-        }
-
-        // Emit state dengan list yang sudah diperbarui
-        emit(
-          ProductListLoaded(
-            data: updatedList,
-            session: result.session,
-            message: result.message,
-          ),
-        );
+        getProducts(session: result.session, message: result.message);
       },
     );
   }
@@ -105,6 +97,14 @@ class ProductCubit extends Cubit<ProductState> {
     String? image,
   }) async {
     Logger().d("Update product");
+    emit(ProductsSingleLoading());
+    Logger().d({
+      "id": id,
+      "name": name,
+      "price": price,
+      "description": description,
+      "image": image,
+    });
     final param = UpdateParam(
       id: id,
       name: name,
@@ -113,6 +113,30 @@ class ProductCubit extends Cubit<ProductState> {
       image: image,
     );
     final result = await updateProductUsecase.call(param);
+    result.fold(
+      (failure) {
+        Logger().d("Fold failure product on updated");
+        Logger().d(failure.message.toString());
+        if (failure is InputFailure) {
+          Logger().d("Fold failure product data on update");
+          Logger().d(failure.data.toString());
+          emit(
+            ProductInputError(
+              data: failure.data,
+              statusCode: failure.statusCode,
+              statusMessage: failure.statusMessage,
+              requestOptions: failure.requestOptions,
+            ),
+          );
+        } else {
+          emit(ProductsFailure(message: failure.message));
+        }
+      },
+      (result) {
+        Logger().d("Fold success");
+        getProducts(session: result.session, message: result.message);
+      },
+    );
   }
 
   Future<void> deleteProduct({required int id}) async {
@@ -147,6 +171,8 @@ abstract class ProductState {
 class ProductInitial extends ProductState {}
 
 class ProductsLoading extends ProductState {}
+
+class ProductsSingleLoading extends ProductState {}
 
 class ProductListLoaded extends ProductState {
   final List<ProductEntity> data;

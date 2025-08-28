@@ -42,11 +42,13 @@ class InputFailure extends Failure {
 }
 
 class InputErrorWrapper {
+  final String? message;
   final Map<String, List<dynamic>>? errors;
 
-  InputErrorWrapper({this.errors});
+  InputErrorWrapper({this.message, this.errors});
 
   factory InputErrorWrapper.fromJson(Map<String, dynamic> json) {
+    final String? message = json['message'];
     final Map<String, List<dynamic>> errorsMap = {};
     if (json['errors'] != null) {
       (json['errors'] as Map<String, dynamic>).forEach((key, value) {
@@ -55,6 +57,6 @@ class InputErrorWrapper {
         }
       });
     }
-    return InputErrorWrapper(errors: errorsMap);
+    return InputErrorWrapper(message: message, errors: errorsMap);
   }
 }
