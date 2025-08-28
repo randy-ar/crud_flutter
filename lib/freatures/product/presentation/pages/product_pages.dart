@@ -43,9 +43,11 @@ class _ProductsPageState extends State<ProductsPage> {
               child: const Text('Batal'),
             ),
             TextButton(
-              onPressed: () {
-                context.read<AuthBloc>().add(LogoutButtonPressed());
-                // GetIt.I<AuthBloc>().add(LogoutButtonPressed());
+              onPressed: () async {
+                await context.read<AuthCubit>().logout();
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                }
               },
               child: const Text('Ya'),
             ),
@@ -60,10 +62,27 @@ class _ProductsPageState extends State<ProductsPage> {
       context: context,
       builder: (BuildContext context) {
         return Container(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16.0),
+                    bottom: Radius.circular(16.0),
+                  ),
+                  child: CachedNetworkImage(
+                    imageUrl: product.image!,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) =>
+                        const Center(child: CircularProgressIndicator()),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.error),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
               Text(
                 product.name,
                 style: const TextStyle(
@@ -74,12 +93,19 @@ class _ProductsPageState extends State<ProductsPage> {
               const SizedBox(height: 8),
               Text('Rp. ${product.price.toStringAsFixed(0)}'),
               const SizedBox(height: 16),
+              Text(product.description ?? ""),
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton.icon(
                     icon: const Icon(Icons.edit),
                     label: const Text('Edit'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(150, 50),
+                    ),
                     onPressed: () async {
                       Navigator.of(context).pop();
                       await Navigator.of(context).push(
@@ -96,6 +122,11 @@ class _ProductsPageState extends State<ProductsPage> {
                   if (product.id != null)
                     ElevatedButton.icon(
                       icon: Icon(Icons.delete),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(150, 50),
+                      ),
                       onPressed: () {
                         Navigator.pop(context);
                         _showDeleteConfirmationDialog(context, product);
@@ -104,6 +135,7 @@ class _ProductsPageState extends State<ProductsPage> {
                     ),
                 ],
               ),
+              const SizedBox(width: 42),
             ],
           ),
         );
@@ -126,7 +158,7 @@ class _ProductsPageState extends State<ProductsPage> {
             child: Text("Batal"),
           ),
           if (product.id != null)
-            ElevatedButton(
+            TextButton(
               child: Text("Hapus"),
               onPressed: () {
                 Navigator.pop(context);
@@ -140,7 +172,7 @@ class _ProductsPageState extends State<ProductsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AuthBloc, AuthState>(
+    return BlocListener<AuthCubit, AuthState>(
       listener: (context, state) {
         if (state is AuthLogoutSuccess) {
           Navigator.of(context).pushAndRemoveUntil(

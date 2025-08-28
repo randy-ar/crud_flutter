@@ -1,5 +1,3 @@
-// lib/features/auth/presentation/pages/login_page.dart
-// ...
 import 'dart:io';
 
 import 'package:crud_product/freatures/auth/presentation/bloc/auth_bloc.dart';
@@ -7,7 +5,6 @@ import 'package:crud_product/freatures/product/presentation/pages/product_pages.
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:get_it/get_it.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -19,6 +16,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final _nameController = TextEditingController();
   final _passwordController = TextEditingController();
+  String _deviceName = 'Unknown Device';
 
   @override
   void dispose() {
@@ -28,105 +26,101 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _getDeviceName().then((name) {
+      setState(() {
+        _deviceName = name;
+      });
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String>(
-      future: _getDeviceName(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+    return BlocConsumer<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (state is AuthSuccess) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const ProductsPage()),
+            (route) => false,
           );
         }
-        final deviceName = snapshot.data ?? 'Unknown Device';
-
+      },
+      builder: (context, state) {
+        String? nameError;
+        if (state is AuthInputError) {
+          nameError = state.data.errors?["name"]?.first.toString();
+        }
         return Scaffold(
           appBar: AppBar(),
-          body: BlocProvider(
-            create: (context) => GetIt.instance<AuthBloc>(),
-            child: BlocConsumer<AuthBloc, AuthState>(
-              listener: (context, state) {
-                if (state is AuthSuccess) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Login successful!')),
-                  );
-                  // Navigasi ke halaman produk
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) => const ProductsPage(),
-                    ),
-                  );
-                } else if (state is AuthFailure) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Login failed: ${state.message}')),
-                  );
-                }
-              },
-              builder: (context, state) {
-                String? nameError;
-                if (state is AuthInputError) {
-                  nameError = state.data.errors?["name"]?.first.toString();
-                }
-
-                return Padding(
-                  padding: EdgeInsetsGeometry.all(16),
-                  child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            "Login",
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          TextField(
-                            controller: _nameController,
-                            decoration: InputDecoration(labelText: 'Name'),
-                          ),
-                          TextField(
-                            controller: _passwordController,
-                            decoration: InputDecoration(labelText: 'Password'),
-                            obscureText: true,
-                          ),
-                          const SizedBox(height: 20),
-                          if (nameError != null)
-                            Text(
-                              nameError,
-                              style: const TextStyle(color: Colors.red),
-                            ),
-                          const SizedBox(height: 20),
-                          ElevatedButton(
-                            style: ButtonStyle(
-                              backgroundColor: WidgetStatePropertyAll<Color>(
-                                Colors.black87,
-                              ),
-                              foregroundColor: WidgetStatePropertyAll(
-                                Colors.white,
-                              ),
-                              minimumSize: WidgetStatePropertyAll<Size>(
-                                const Size(double.infinity, 50),
-                              ),
-                            ),
-                            onPressed: () {
-                              context.read<AuthBloc>().add(
-                                LoginButtonPressed(
-                                  name: _nameController.text,
-                                  password: _passwordController.text,
-                                  deviceName: deviceName,
-                                ),
-                              );
-                            },
-                            child: const Text('Login'),
-                          ),
-                        ],
+          body: Padding(
+            padding: EdgeInsetsGeometry.all(16),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 20),
+                    Text(
+                      "Login",
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                );
-              },
+                    const SizedBox(height: 40),
+                    TextField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Username',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
+
+                    TextField(
+                      controller: _passwordController,
+                      decoration: const InputDecoration(
+                        labelText: 'Password',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.lock),
+                      ),
+                      obscureText: true,
+                    ),
+                    const SizedBox(height: 20),
+                    if (nameError != null)
+                      Text(
+                        nameError,
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      style: ButtonStyle(
+                        backgroundColor: WidgetStatePropertyAll<Color>(
+                          Colors.black87,
+                        ),
+                        foregroundColor: WidgetStatePropertyAll(Colors.white),
+                        minimumSize: WidgetStatePropertyAll<Size>(
+                          const Size(double.infinity, 50),
+                        ),
+                      ),
+                      onPressed: () {
+                        context.read<AuthCubit>().login(
+                          name: _nameController.text,
+                          password: _passwordController.text,
+                          deviceName: _deviceName,
+                        );
+                      },
+                      child: state is AuthLoading
+                          ? CircularProgressIndicator()
+                          : Text('Login'),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
+                ),
+              ),
             ),
           ),
         );

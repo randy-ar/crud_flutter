@@ -49,10 +49,8 @@ Future<void> init() async {
 
   Logger().d("BLOC/CUBIT");
   // BLoC & Cubit
-  sl.registerFactory(() => AuthBloc(loginUsecase: sl(), logoutUsecase: sl()));
-  sl.registerFactory(
-    () => ProductCubit(sl(), sl(), sl(), sl()),
-  ); // PENYESUAIAN CUBIT
+  sl.registerFactory(() => AuthCubit(sl(), sl()));
+  sl.registerFactory(() => ProductCubit(sl(), sl(), sl(), sl()));
 
   Logger().d("REPOSITORIES");
   // Repositories
@@ -93,7 +91,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<AuthBloc>(create: (context) => GetIt.instance<AuthBloc>()),
+        BlocProvider<AuthCubit>(
+          create: (context) => GetIt.instance<AuthCubit>(),
+        ),
         BlocProvider<ProductCubit>(
           // PENYESUAIAN CUBIT
           create: (context) => GetIt.instance<ProductCubit>(),

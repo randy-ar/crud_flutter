@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:crud_product/freatures/product/domain/entities/product_entity.dart';
 import 'package:crud_product/freatures/product/presentation/cubit/product_cubit.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
   File? _selectedImage;
+  String? _urlImage;
 
   @override
   void initState() {
@@ -30,6 +32,7 @@ class _ProductFormPageState extends State<ProductFormPage> {
       _nameController.text = widget.product!.name;
       _descriptionController.text = widget.product!.description;
       _priceController.text = widget.product!.price.toString();
+      _urlImage = widget.product!.image;
     }
   }
 
@@ -51,6 +54,14 @@ class _ProductFormPageState extends State<ProductFormPage> {
           image: _selectedImage?.path,
         );
       }
+    } else {
+      context.read<ProductCubit>().updateProduct(
+        id: widget.product!.id!, // Gunakan ID dari product yang ada
+        name: _nameController.text,
+        description: _descriptionController.text,
+        price: double.parse(_priceController.text),
+        image: _selectedImage?.path,
+      );
     }
   }
 
@@ -108,22 +119,57 @@ class _ProductFormPageState extends State<ProductFormPage> {
                   const SizedBox(height: 16),
                   // PENYESUAIAN: Bagian untuk pratinjau dan pilih gambar
                   _selectedImage != null
-                      ? Image.file(
-                          _selectedImage!,
-                          height: 200,
-                          fit: BoxFit.cover,
+                      ? Expanded(
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16.0),
+                              bottom: Radius.circular(16.0),
+                            ),
+                            child: Image.file(
+                              _selectedImage!,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
                         )
-                      : const Text('Belum ada gambar yang dipilih.'),
+                      : (_urlImage != null)
+                      ? Expanded(
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16.0),
+                              bottom: Radius.circular(16.0),
+                            ),
+                            child: CachedNetworkImage(
+                              imageUrl: _urlImage!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                              errorWidget: (context, url, error) =>
+                                  const Icon(Icons.error),
+                            ),
+                          ),
+                        )
+                      : const Text(
+                          'Belum ada gambar yang dipilih.',
+                          textAlign: TextAlign.center,
+                        ),
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Nama Produk'),
+                    decoration: InputDecoration(
+                      labelText: 'Nama Produk',
+                      border: OutlineInputBorder(),
+                    ),
                     validator: (value) =>
                         value!.isEmpty ? 'Nama tidak boleh kosong' : null,
                   ),
+                  const SizedBox(height: 20),
                   TextFormField(
                     controller: _priceController,
-                    decoration: const InputDecoration(labelText: 'Harga'),
+                    decoration: InputDecoration(
+                      labelText: 'Harga',
+                      border: OutlineInputBorder(),
+                    ),
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
@@ -138,6 +184,11 @@ class _ProductFormPageState extends State<ProductFormPage> {
                     onPressed: _pickImage,
                     icon: const Icon(Icons.image),
                     label: const Text('Pilih Gambar'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
                   ),
                   const SizedBox(height: 40),
 
@@ -145,14 +196,20 @@ class _ProductFormPageState extends State<ProductFormPage> {
                     minLines: 3,
                     maxLines: 5,
                     controller: _descriptionController,
-                    decoration: const InputDecoration(
-                      labelText: 'Deskripsi (Opsional)',
+                    decoration: InputDecoration(
+                      labelText: 'Deksripsi',
+                      border: OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 40),
                   ElevatedButton(
                     onPressed: () => _saveProduct(context),
                     child: Text(isUpdating ? 'Ubah' : 'Simpan'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 50),
+                    ),
                   ),
                 ],
               ),

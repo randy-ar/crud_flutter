@@ -97,14 +97,20 @@ class ProductCubit extends Cubit<ProductState> {
     );
   }
 
-  Future<void> updateProduct(ProductEntity product) async {
+  Future<void> updateProduct({
+    required int id,
+    required String name,
+    required double price,
+    String? description,
+    String? image,
+  }) async {
     Logger().d("Update product");
     final param = UpdateParam(
-      id: product.id!,
-      name: product.name,
-      price: product.price,
-      description: product.description,
-      image: product.image,
+      id: id,
+      name: name,
+      price: price,
+      description: description,
+      image: image,
     );
     final result = await updateProductUsecase.call(param);
   }

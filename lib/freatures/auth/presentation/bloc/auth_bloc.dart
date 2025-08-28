@@ -7,80 +7,50 @@ import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 
-class AuthBloc extends Bloc<AuthEvent, AuthState> {
+class AuthCubit extends Cubit<AuthState> {
   final LoginUsecase loginUsecase;
   final LogoutUsecase logoutUsecase;
 
-  AuthBloc({required this.loginUsecase, required this.logoutUsecase})
-    : super(AuthInitial()) {
-    on<LoginButtonPressed>(_onLoginButtonPressed);
-    on<LogoutButtonPressed>(_onLogoutButton);
-  }
+  AuthCubit(this.loginUsecase, this.logoutUsecase) : super(AuthInitial());
 
-  Future<void> _onLoginButtonPressed(
-    LoginButtonPressed event,
-    Emitter<AuthState> emit,
-  ) async {
+  Future<void> login({
+    required String name,
+    required String password,
+    required String deviceName,
+  }) async {
     emit(AuthLoading());
     final result = await loginUsecase.call(
-      LoginParams(
-        name: event.name,
-        password: event.password,
-        deviceName: event.deviceName,
-      ),
+      LoginParams(name: name, password: password, deviceName: deviceName),
     );
-    result.fold((failure) {
-      if (failure is InputFailure) {
-        // State ini bisa digunakan untuk menampilkan pesan error spesifik di UI
-        emit(
-          AuthInputError(
-            data: failure.data,
-            statusCode: failure.statusCode,
-            statusMessage: failure.statusMessage,
-            requestOptions: failure.requestOptions,
-          ),
-        );
-      } else {
-        emit(AuthFailure(message: failure.message));
-      }
-    }, (authEntity) => emit(AuthSuccess(authEntity: authEntity)));
+    result.fold(
+      (failure) => {
+        if (failure is InputFailure)
+          {
+            emit(
+              AuthInputError(
+                data: failure.data,
+                statusCode: failure.statusCode,
+                statusMessage: failure.statusMessage,
+                requestOptions: failure.requestOptions,
+              ),
+            ),
+          }
+        else
+          {emit(AuthFailure(message: failure.message))},
+      },
+      (result) => emit(AuthSuccess(authEntity: result)),
+    );
   }
 
-  Future<void> _onLogoutButton(
-    LogoutButtonPressed event,
-    Emitter<AuthState> emit,
-  ) async {
+  Future<void> logout() async {
     emit(AuthLoading());
     final result = await logoutUsecase.call(NoParams());
     result.fold(
       (failure) => emit(AuthFailure(message: failure.message)),
-      (AuthEntity) => emit(AuthLogoutSuccess(authEntity: AuthEntity)),
+      (result) => emit(AuthLogoutSuccess(authEntity: result)),
     );
   }
 }
-
-abstract class AuthEvent extends Equatable {
-  const AuthEvent();
-  @override
-  List<Object> get props => [];
-}
-
-class LoginButtonPressed extends AuthEvent {
-  final String name;
-  final String password;
-  final String deviceName;
-
-  const LoginButtonPressed({
-    required this.name,
-    required this.password,
-    required this.deviceName,
-  });
-
-  @override
-  List<Object> get props => [name, password, deviceName];
-}
-
-class LogoutButtonPressed extends AuthEvent {}
 
 abstract class AuthState extends Equatable {
   const AuthState();
