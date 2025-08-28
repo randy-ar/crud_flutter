@@ -8,7 +8,7 @@ class AuthModel extends AuthEntity {
   const AuthModel({
     required super.session,
     required super.message,
-    required super.token,
+    super.token,
   });
 
   factory AuthModel.fromJson(Map<String, dynamic> json) =>

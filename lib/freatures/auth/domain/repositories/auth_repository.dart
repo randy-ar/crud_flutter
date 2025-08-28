@@ -8,4 +8,6 @@ abstract class AuthRepository {
     required String password,
     required String deviceName,
   });
+
+  Future<Either<Failure, AuthEntity>> logout();
 }

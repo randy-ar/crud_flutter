@@ -3,6 +3,7 @@
 import 'dart:io';
 
 import 'package:crud_product/freatures/auth/presentation/bloc/auth_bloc.dart';
+import 'package:crud_product/freatures/product/presentation/pages/product_pages.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -49,6 +50,11 @@ class _LoginPageState extends State<LoginPage> {
                     const SnackBar(content: Text('Login successful!')),
                   );
                   // Navigasi ke halaman produk
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => const ProductsPage(),
+                    ),
+                  );
                 } else if (state is AuthFailure) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Login failed: ${state.message}')),
@@ -133,19 +139,19 @@ class _LoginPageState extends State<LoginPage> {
     String deviceName = 'Unknown Device';
     if (Platform.isAndroid) {
       AndroidDeviceInfo androidInfo = await deviceInfoPlugin.androidInfo;
-      deviceName = androidInfo.model ?? 'Android Device';
+      deviceName = androidInfo.model;
     } else if (Platform.isIOS) {
       IosDeviceInfo iosInfo = await deviceInfoPlugin.iosInfo;
-      deviceName = iosInfo.name ?? 'iOS Device';
+      deviceName = iosInfo.name;
     } else if (Platform.isMacOS) {
       MacOsDeviceInfo macOsInfo = await deviceInfoPlugin.macOsInfo;
-      deviceName = macOsInfo.model ?? 'macOS Device';
+      deviceName = macOsInfo.model;
     } else if (Platform.isWindows) {
       WindowsDeviceInfo windowsInfo = await deviceInfoPlugin.windowsInfo;
-      deviceName = windowsInfo.computerName ?? 'Windows Device';
+      deviceName = windowsInfo.computerName;
     } else if (Platform.isLinux) {
       LinuxDeviceInfo linuxInfo = await deviceInfoPlugin.linuxInfo;
-      deviceName = linuxInfo.name ?? 'Linux Device';
+      deviceName = linuxInfo.name;
     } else {
       WebBrowserInfo webBrowserInfo = await deviceInfoPlugin.webBrowserInfo;
       deviceName = webBrowserInfo.browserName.toString();

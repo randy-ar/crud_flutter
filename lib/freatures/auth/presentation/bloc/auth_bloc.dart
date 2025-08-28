@@ -1,15 +1,20 @@
+import 'package:crud_product/core/usecase/usecase.dart';
 import 'package:crud_product/freatures/auth/domain/entities/auth_entity.dart';
 import 'package:crud_product/core/error/failures.dart';
 import 'package:crud_product/freatures/auth/domain/usecases/login_use_case.dart';
+import 'package:crud_product/freatures/auth/domain/usecases/logout_use_case.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final LoginUsecase loginUsecase;
+  final LogoutUsecase logoutUsecase;
 
-  AuthBloc({required this.loginUsecase}) : super(AuthInitial()) {
+  AuthBloc({required this.loginUsecase, required this.logoutUsecase})
+    : super(AuthInitial()) {
     on<LoginButtonPressed>(_onLoginButtonPressed);
+    on<LogoutButtonPressed>(_onLogoutButton);
   }
 
   Future<void> _onLoginButtonPressed(
@@ -40,6 +45,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       }
     }, (authEntity) => emit(AuthSuccess(authEntity: authEntity)));
   }
+
+  Future<void> _onLogoutButton(
+    LogoutButtonPressed event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    final result = await logoutUsecase.call(NoParams());
+    result.fold(
+      (failure) => emit(AuthFailure(message: failure.message)),
+      (AuthEntity) => emit(AuthLogoutSuccess(authEntity: AuthEntity)),
+    );
+  }
 }
 
 abstract class AuthEvent extends Equatable {
@@ -63,6 +80,8 @@ class LoginButtonPressed extends AuthEvent {
   List<Object> get props => [name, password, deviceName];
 }
 
+class LogoutButtonPressed extends AuthEvent {}
+
 abstract class AuthState extends Equatable {
   const AuthState();
 
@@ -78,6 +97,14 @@ class AuthSuccess extends AuthState {
   final AuthEntity authEntity;
 
   const AuthSuccess({required this.authEntity});
+
+  @override
+  List<Object> get props => [authEntity];
+}
+
+class AuthLogoutSuccess extends AuthState {
+  final AuthEntity authEntity;
+  const AuthLogoutSuccess({required this.authEntity});
 
   @override
   List<Object> get props => [authEntity];

@@ -25,7 +25,7 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
         deviceName: deviceName,
       );
-      await localStorageService.saveToken(authModel.token);
+      await localStorageService.saveToken(authModel.token!);
       return Right(authModel);
     } on DioException catch (e) {
       if (e.response != null && e.response!.statusCode == 422) {
@@ -42,6 +42,20 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
       return Left(ServerFailure(message: e.message ?? 'Unknown error'));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, AuthEntity>> logout() async {
+    try {
+      // Panggil API logout (opsional, jika server membutuhkan)
+      final response = await remoteDataSource.logout();
+
+      // Hapus token dari local storage
+      await localStorageService.deleteToken();
+      return Right(response);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }

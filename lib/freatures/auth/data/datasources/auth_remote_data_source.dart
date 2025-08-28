@@ -15,4 +15,7 @@ abstract class AuthRemoteDataSource {
     @Field('password') required String password,
     @Field('device_name') required String deviceName,
   });
+
+  @POST('/logout')
+  Future<AuthModel> logout();
 }
