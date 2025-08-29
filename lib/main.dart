@@ -13,11 +13,11 @@ import 'package:crud_product/freatures/product/domain/usecase/update_product_use
 import 'package:crud_product/freatures/product/presentation/cubit/product_cubit.dart';
 import 'package:crud_product/freatures/product/presentation/pages/product_pages.dart';
 import 'package:flutter/material.dart';
-import 'package:crud_product/freatures/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:crud_product/freatures/auth/data/src/auth_remote_data_source.dart';
 import 'package:crud_product/freatures/auth/data/repositories/auth_repository_impl.dart';
 import 'package:crud_product/freatures/auth/domain/repositories/auth_repository.dart';
 import 'package:crud_product/freatures/auth/domain/usecases/login_use_case.dart';
-import 'package:crud_product/freatures/auth/presentation/bloc/auth_cubit.dart';
+import 'package:crud_product/freatures/auth/presentation/cubit/auth_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';

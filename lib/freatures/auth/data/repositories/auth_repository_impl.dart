@@ -1,6 +1,6 @@
 import 'package:crud_product/core/error/failures.dart';
 import 'package:crud_product/core/local_storage/local_storage_service.dart';
-import 'package:crud_product/freatures/auth/data/datasources/auth_remote_data_source.dart';
+import 'package:crud_product/freatures/auth/data/src/auth_remote_data_source.dart';
 import 'package:crud_product/freatures/auth/domain/entities/auth_entity.dart';
 import 'package:crud_product/freatures/auth/domain/repositories/auth_repository.dart';
 import 'package:dartz/dartz.dart';

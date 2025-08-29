@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:crud_product/freatures/auth/presentation/bloc/auth_cubit.dart';
+import 'package:crud_product/freatures/auth/presentation/cubit/auth_cubit.dart';
 import 'package:crud_product/freatures/product/presentation/pages/product_pages.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/material.dart';

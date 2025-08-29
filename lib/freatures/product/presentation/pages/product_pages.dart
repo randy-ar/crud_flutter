@@ -1,5 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:crud_product/freatures/auth/presentation/bloc/auth_cubit.dart';
+import 'package:crud_product/freatures/auth/presentation/cubit/auth_cubit.dart';
 import 'package:crud_product/freatures/auth/presentation/pages/login_page.dart';
 import 'package:crud_product/freatures/product/domain/entities/product_entity.dart';
 import 'package:crud_product/freatures/product/presentation/cubit/product_cubit.dart';
